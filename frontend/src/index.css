@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-slate-50 text-ink-900 antialiased;
+  }
+
+  ::selection {
+    @apply bg-brand-100 text-ink-900;
+  }
+}
+
+@layer components {
+  .sda-input {
+    @apply mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-ink-900 shadow-sm transition-colors placeholder:text-slate-400;
+    @apply focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25;
+    @apply disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500;
+  }
+
+  .sda-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors;
+    @apply hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2;
+    @apply disabled:pointer-events-none disabled:opacity-55;
+  }
+
+  .sda-btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-ink-900 shadow-sm transition-colors;
+    @apply hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-2;
+    @apply disabled:pointer-events-none disabled:opacity-55;
+  }
+
+  .sda-card {
+    @apply rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm;
+  }
+
+  .sda-page-title {
+    @apply font-display text-2xl font-bold tracking-tight text-ink-900;
+  }
+}
