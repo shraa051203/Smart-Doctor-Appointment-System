@@ -44,9 +44,14 @@ export default function Layout({ children }) {
               Doctors
             </NavLink>
             {isAuthenticated && user?.role === 'patient' && (
-              <NavLink to="/patient" className={linkClass}>
-                My appointments
-              </NavLink>
+              <>
+                <NavLink to="/patient" className={linkClass}>
+                  My appointments
+                </NavLink>
+                <NavLink to="/book-ai" className={linkClass}>
+                  AI Booking
+                </NavLink>
+              </>
             )}
             {isAuthenticated && user?.role === 'doctor' && (
               <NavLink to="/doctor" className={linkClass}>

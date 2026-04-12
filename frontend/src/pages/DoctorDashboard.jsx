@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import { getErrorMessage } from '../utils/apiError';
 import PageLoader from '../components/PageLoader';
 import Spinner from '../components/Spinner';
@@ -8,6 +10,8 @@ import Alert from '../components/Alert';
 const defaultTimes = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
 
 export default function DoctorDashboard() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,6 +22,7 @@ export default function DoctorDashboard() {
   const [availMsg, setAvailMsg] = useState('');
   const [availMsgType, setAvailMsgType] = useState('info');
   const [updatingId, setUpdatingId] = useState(null);
+  const [deletingProfile, setDeletingProfile] = useState(false);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -97,6 +102,24 @@ export default function DoctorDashboard() {
     }
   };
 
+  const deleteProfile = async () => {
+    if (!profile) return;
+    const confirmed = window.confirm(
+      `Are you sure you want to delete your profile and account? This will permanently delete your profile, all your appointments, and your account. This cannot be undone.`
+    );
+    if (!confirmed) return;
+    setDeletingProfile(true);
+    setError('');
+    try {
+      await api.delete(`/doctors/${profile._id}`);
+      logout();
+      navigate('/', { replace: true });
+    } catch (err) {
+      setError(getErrorMessage(err, 'Could not delete profile.'));
+      setDeletingProfile(false);
+    }
+  };
+
   if (loading && !profile && !error) {
     return <PageLoader message="Loading your dashboard…" />;
   }
@@ -114,11 +137,24 @@ export default function DoctorDashboard() {
 
   return (
     <div className="space-y-10">
-      <div>
-        <h1 className="sda-page-title">Doctor dashboard</h1>
-        <p className="text-sm text-ink-500">
-          {profile?.name} · {profile?.specialization}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="sda-page-title">Doctor Dashboard</h1>
+          <p className="text-sm text-ink-500">
+            {profile?.name} · {profile?.specialization}
+          </p>
+        </div>
+        {profile && (
+          <button
+            type="button"
+            onClick={deleteProfile}
+            disabled={deletingProfile}
+            className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60 transition"
+          >
+            {deletingProfile && <Spinner className="!h-4 !w-4 border-red-400 border-r-transparent" />}
+            🗑 Delete My Profile
+          </button>
+        )}
       </div>
       {error ? (
         <div className="space-y-2">

@@ -1,12 +1,14 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import { getErrorMessage } from '../utils/apiError';
 import PageLoader from '../components/PageLoader';
 import Alert from '../components/Alert';
 import Spinner from '../components/Spinner';
 
 export default function BookAppointment() {
+  const { isAuthenticated } = useAuth();
   const { profileId } = useParams();
   const navigate = useNavigate();
   const [doctor, setDoctor] = useState(null);
@@ -43,14 +45,48 @@ export default function BookAppointment() {
     return day?.slots || [];
   }, [doctor, date]);
 
+  const availableSlotsForDate = useMemo(() => {
+    const slots = slotsForDate;
+    if (!date) return slots;
+
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const currentTime = now.toTimeString().slice(0, 5);
+
+    if (date === today) {
+      // Filter out past times
+      return slots.filter(slot => slot > currentTime);
+    }
+    return slots;
+  }, [slotsForDate, date]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
     setSuccess('');
+
+    // Auth guard — must be logged in to book an appointment
+    if (!isAuthenticated) {
+      alert('You must be logged in to book an appointment. Please sign in first.');
+      navigate('/login', { state: { from: { pathname: `/book/${profileId}` } } });
+      return;
+    }
+
     if (!date || !time) {
       setFormError('Choose a date and time.');
       return;
     }
+
+    // Client-side validation for past dates
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const currentTime = now.toTimeString().slice(0, 5);
+
+    if (date < today || (date === today && time <= currentTime)) {
+      setFormError('Cannot book appointment for past date/time.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       await api.post('/appointments/book', {
@@ -119,6 +155,7 @@ export default function BookAppointment() {
             id="date"
             type="date"
             value={date}
+            min={new Date().toISOString().split('T')[0]}
             onChange={(e) => {
               setDate(e.target.value);
               setTime('');
@@ -133,10 +170,10 @@ export default function BookAppointment() {
           <label htmlFor="time" className="block text-sm font-medium text-ink-700">
             Time slot
           </label>
-          {slotsForDate.length === 0 ? (
+          {availableSlotsForDate.length === 0 ? (
             <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900" role="status">
               {date
-                ? 'No open slots for this date. Pick another date or ask the doctor to add availability.'
+                ? 'No available slots for this date. Pick another date or ask the doctor to add availability.'
                 : 'Select a date first.'}
             </p>
           ) : (
@@ -147,7 +184,7 @@ export default function BookAppointment() {
               className="sda-input"
             >
               <option value="">Select time</option>
-              {slotsForDate.map((t) => (
+              {availableSlotsForDate.map((t) => (
                 <option key={t} value={t}>
                   {t}
                 </option>
@@ -169,7 +206,7 @@ export default function BookAppointment() {
         </div>
         <button
           type="submit"
-          disabled={submitting || slotsForDate.length === 0}
+          disabled={submitting || availableSlotsForDate.length === 0}
           className="sda-btn-primary w-full"
         >
           {submitting && <Spinner className="!h-4 !w-4 border-white border-r-transparent" />}

@@ -43,6 +43,7 @@ export default function Register() {
   const [experienceYears, setExperienceYears] = useState('');
   const [bio, setBio] = useState('');
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [fieldErr, setFieldErr] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -82,7 +83,14 @@ export default function Register() {
         payload.experienceYears = experienceYears === '' ? 0 : Number(experienceYears);
         payload.bio = bio.trim();
       }
-      await register(payload);
+      const result = await register(payload);
+      // Supabase email confirmation required — stay on page and show message
+      if (result?.needsEmailConfirmation) {
+        setSuccessMsg(
+          'Account created! Please check your email and click the confirmation link before signing in.'
+        );
+        return;
+      }
       navigate(role === 'doctor' ? '/doctor' : '/doctors', { replace: true });
     } catch (err) {
       const data = err.response?.data;
@@ -119,6 +127,7 @@ export default function Register() {
       ) : null}
       <form onSubmit={handleSubmit} className="sda-card mt-8 space-y-4">
         {error && <Alert type="error">{error}</Alert>}
+        {successMsg && <Alert type="success">{successMsg}</Alert>}
         <div>
           <label className="block text-sm font-medium text-ink-700">I am a</label>
           <select value={role} onChange={(e) => setRole(e.target.value)} className="sda-input">

@@ -1,17 +1,20 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { getErrorMessage } from '../utils/apiError';
 import { ProfileCardSkeleton } from '../components/Skeleton';
 import Alert from '../components/Alert';
+import Spinner from '../components/Spinner';
 
 export default function DoctorProfile() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -26,6 +29,22 @@ export default function DoctorProfile() {
       setLoading(false);
     }
   }, [id]);
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete your profile? This will also delete all your appointments and cannot be undone.')) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      await api.delete(`/doctors/${id}`);
+      alert('Profile deleted successfully. You will be logged out.');
+      navigate('/login');
+    } catch (err) {
+      alert(getErrorMessage(err, 'Failed to delete profile.'));
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     load();
@@ -52,6 +71,7 @@ export default function DoctorProfile() {
   }
 
   const canBook = isAuthenticated && user?.role === 'patient';
+  const canDelete = isAuthenticated && user?.role === 'doctor' && user?.id === doctor?.userId;
 
   return (
     <div className="max-w-2xl">
@@ -74,27 +94,38 @@ export default function DoctorProfile() {
           <p>{doctor.email}</p>
           {doctor.phone ? <p className="mt-1">{doctor.phone}</p> : null}
         </div>
-        {canBook ? (
-          <Link to={`/book/${doctor._id}`} className="sda-btn-primary mt-8 inline-flex">
-            Book appointment
-          </Link>
-        ) : (
-          <p className="mt-8 text-sm text-ink-500">
-            {!isAuthenticated ? (
-              <>
-                <Link
-                  to="/login"
-                  className="font-semibold text-brand-600 hover:text-brand-800 hover:underline"
-                >
-                  Sign in
-                </Link>{' '}
-                as a patient to book.
-              </>
-            ) : (
-              'Only patients can book appointments.'
-            )}
-          </p>
-        )}
+        <div className="mt-8 flex flex-wrap gap-3">
+          {canBook ? (
+            <Link to={`/book/${doctor._id}`} className="sda-btn-primary">
+              Book appointment
+            </Link>
+          ) : canDelete ? (
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="sda-btn-danger"
+            >
+              {deleting && <Spinner className="!h-4 !w-4 border-white border-r-transparent" />}
+              Delete Profile
+            </button>
+          ) : (
+            <p className="text-sm text-ink-500">
+              {!isAuthenticated ? (
+                <>
+                  <Link
+                    to="/login"
+                    className="font-semibold text-brand-600 hover:text-brand-800 hover:underline"
+                  >
+                    Sign in
+                  </Link>{' '}
+                  as a patient to book.
+                </>
+              ) : (
+                'Only patients can book appointments.'
+              )}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

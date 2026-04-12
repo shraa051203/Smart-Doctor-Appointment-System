@@ -14,11 +14,10 @@ export default function Home() {
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-700 to-slate-900 px-8 py-16 text-white shadow-xl">
         <div className="relative z-10 max-w-2xl">
           <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">
-            Smart Doctor Appointment System
+            Appointo: smart Doctor booking system
           </h1>
           <p className="mt-4 text-lg text-brand-100">
-            Book trusted specialists in minutes. Doctors manage availability; patients see real open
-            slots—no double booking.
+            Book trusted specialists in minutes. 
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link

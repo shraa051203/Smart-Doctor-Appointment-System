@@ -41,6 +41,55 @@ npm run seed:doctors
 
 Creates five demo doctors if their emails are not already registered. Log in as any of them with the same password (default `Doctor123!`, or set `SEED_DOCTOR_PASSWORD` in `.env`). Patient users can browse **Doctors** and book immediately.
 
+## AI-Powered Booking
+
+The system includes an AI-powered appointment booking feature that allows patients to book appointments using natural language.
+
+### Setup
+
+1. **Add OpenAI API Key** to `backend/.env`:
+   ```
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
+
+2. **Test the AI parsing** (optional):
+   ```bash
+   cd backend
+   npm run test:ai
+   ```
+
+### Usage
+
+1. Log in as a patient
+2. Click "AI Booking" in the navigation
+3. Enter natural language requests like:
+   - "Book appointment with Dr. Sharma tomorrow at 5pm"
+   - "Schedule with Dr. Ananya Sharma next Monday at 2:30 PM"
+   - "Book with Dr. Rohan Mehta today at 10am"
+
+### API Endpoint
+
+**POST /api/appointments/book-ai**
+```json
+{
+  "message": "Book appointment with Dr. Sharma tomorrow at 5pm"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Appointment booked successfully with Dr. Ananya Sharma on 2024-01-15 at 17:00",
+  "appointment": { ... },
+  "parsed": {
+    "doctor_name": "Dr. Ananya Sharma",
+    "date": "2024-01-15",
+    "time": "17:00"
+  }
+}
+```
+
 ### 3. Frontend
 
 ```bash

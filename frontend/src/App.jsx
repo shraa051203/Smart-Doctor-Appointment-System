@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Doctors from './pages/Doctors';
 import DoctorProfile from './pages/DoctorProfile';
 import BookAppointment from './pages/BookAppointment';
+import AIBooking from './pages/AIBooking';
 import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
 import AdminAnalytics from './pages/AdminAnalytics';
@@ -26,6 +27,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={['patient']}>
               <BookAppointment />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/book-ai"
+          element={
+            <ProtectedRoute roles={['patient']}>
+              <AIBooking />
             </ProtectedRoute>
           }
         />

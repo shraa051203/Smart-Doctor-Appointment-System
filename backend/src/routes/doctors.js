@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { body, param, query, validationResult } from 'express-validator';
 import { User } from '../models/User.js';
 import { DoctorProfile } from '../models/DoctorProfile.js';
+import { Appointment } from '../models/Appointment.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = Router();
@@ -203,5 +204,36 @@ router.post(
     }
   }
 );
+
+/**
+ * DELETE /api/doctors/:id — doctor only: delete own profile and related appointments
+ */
+router.delete('/:id', authenticate, authorize('doctor'), [param('id').isMongoId()], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ message: 'Invalid id', errors: errors.array() });
+  }
+  try {
+    const profile = await DoctorProfile.findById(req.params.id);
+    if (!profile) return res.status(404).json({ message: 'Doctor profile not found' });
+    if (profile.user.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'You can only delete your own profile' });
+    }
+
+    // Delete related appointments
+    await Appointment.deleteMany({ doctor: req.user.id });
+
+    // Delete the profile
+    await DoctorProfile.findByIdAndDelete(req.params.id);
+
+    // Delete the user account
+    await User.findByIdAndDelete(req.user.id);
+
+    return res.json({ message: 'Doctor profile and account deleted successfully' });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: 'Failed to delete doctor profile' });
+  }
+});
 
 export default router;

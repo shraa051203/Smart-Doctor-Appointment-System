@@ -80,17 +80,27 @@ router.post(
       return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
     }
     const { email, password } = req.body;
+    const lowerEmail = String(email || '').trim().toLowerCase();
     try {
-      // Match how emails are stored (schema uses lowercase)
-      const user = await User.findOne({ email }).select('+passwordHash');
-      if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+      console.log(`[auth] Login attempt: ${lowerEmail}`);
+      const user = await User.findOne({ email: lowerEmail }).select('+passwordHash');
+      if (!user) {
+        console.log(`[auth] User not found: ${lowerEmail}`);
         return res.status(401).json({ message: 'Invalid email or password' });
       }
+      
+      const isMatch = await bcrypt.compare(password, user.passwordHash);
+      if (!isMatch) {
+        console.log(`[auth] Password mismatch for: ${lowerEmail}`);
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
+
+      console.log(`[auth] Login success: ${lowerEmail} (role: ${user.role})`);
       const token = signToken(user);
       const userJson = user.toJSON();
       return res.json({ token, user: userJson });
     } catch (e) {
-      console.error(e);
+      console.error('[auth] Login error:', e);
       return res.status(500).json({ message: 'Login failed' });
     }
   }
